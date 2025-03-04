@@ -1,0 +1,93 @@
+---
+repos:
+  # isort
+  - repo: https://github.com/timothycrosley/isort.git
+    rev: 5.12.0
+    hooks:
+      - id: isort
+        exclude: ".venv/"
+
+  # Black
+  - repo: https://github.com/psf/black
+    rev: "23.9.1"
+    hooks:
+      - id: black
+        language_version: python3.9
+        exclude: ".venv/"
+
+  # Flake8
+  - repo: https://github.com/PyCQA/flake8
+    rev: "3.7.9"
+    hooks:
+      - id: flake8
+
+  # Mypy
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: "v1.5.1"
+    hooks:
+      - id: mypy
+        exclude: ".venv/"
+        args:
+          - --explicit-package-bases
+          - --ignore-missing-imports
+          - --config-file=mypy.ini
+        additional_dependencies:
+          - pydantic==1.4
+
+  # Shellcheck
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.7.2.1  # Use the latest version
+    hooks:
+      - id: shellcheck
+        exclude: ".venv/"
+
+  # Makefile linting
+  - repo: https://github.com/mrtazz/checkmake.git
+    # Or another commit hash or version
+    rev: 0.2.2
+    hooks:
+      - id: checkmake
+        exclude: ".venv/"
+
+  # SQLFluff
+  - repo: https://github.com/sqlfluff/sqlfluff
+    rev: "2.3.5"
+    hooks:
+
+      # Linting
+      - id: sqlfluff-lint
+        name: sqlfluff-lint
+        # Set `--processes 0` to use maximum parallelism
+        entry: sqlfluff lint
+        language: python
+        description: "Lints sql files with `SQLFluff`"
+        types: [sql]
+        require_serial: true
+        additional_dependencies: []
+
+      # Fixing
+      - id: sqlfluff-fix
+        name: sqlfluff-fix
+        # Set a couple of default flags:
+        #  - `--force` to disable confirmation
+        #  - `--show-lint-violations` shows issues to not require running `sqlfluff lint`
+        #  - `--processes 0` to use maximum parallelism
+        # By default, this hook applies all rules.
+        entry: sqlfluff fix --force --show-lint-violations
+        language: python
+        description: "Fixes sql lint errors with `SQLFluff`"
+        types: [sql]
+        require_serial: true
+        additional_dependencies: []
+
+  # Local hooks
+  - repo: local
+    hooks:
+      
+      # Unit tests
+      - id: make unit-tests
+        name: unit-tests
+        entry: make unit-tests
+        language: system
+        pass_filenames: false
+        exclude: ".venv/"

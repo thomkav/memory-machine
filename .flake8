@@ -1,0 +1,5 @@
+[flake8]
+extend-ignore = E203
+exclude = .venv/,.git,__pycache__,./tests/dags/test_dag_example.py
+max-complexity = 10
+max-line-length = 128
