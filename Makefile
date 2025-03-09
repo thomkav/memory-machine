@@ -160,6 +160,22 @@ clean: clean-pyc clean-test clean-logs # Clean the project
 	$(call echo_wrapper, rm -rf .venv)
 
 # --------------------
+# Copilot instruction management
+# --------------------
+
+.PHONY: switch-instructions
+switch-instructions:
+	$(call echo_wrapper, bash scripts/run_switch_copilot_instructions.sh)
+
+# --------------------
+# Run commands
+# --------------------
+
+.PHONY: run-ui
+run-ui: # Run the UI
+	$(call echo_wrapper, bash scripts/run_ui.sh)
+
+# --------------------
 # Help
 # --------------------
 

@@ -6,12 +6,10 @@ Details specific to schemas and tables belong in a separate file.
 import psycopg2
 from psycopg2.extensions import connection as Psycopg2Connection
 from sqlalchemy import create_engine
-from sqlalchemy.orm import DeclarativeMeta, declarative_base
+from sqlalchemy.orm import DeclarativeBase
 
 from db.config import PGDATABASE, PGHOST, PGPASSWORD, PGPORT, PGUSER
 
-# This is the SQLAlchemy declarative base.
-BaseModel: DeclarativeMeta = declarative_base()
 
 PG_URI = f"postgresql://{PGUSER}:{PGPASSWORD}@{PGHOST}:{PGPORT}/{PGDATABASE}"
 try:
@@ -41,3 +39,11 @@ class Psycopg2Engine:
 
 
 DB_ENGINE__PSYCOPG2 = Psycopg2Engine(PG_URI)
+
+
+class SchemaSpecificBaseModel(DeclarativeBase):
+    """Base class for schema-specific models."""
+
+    __abstract__ = True
+    __table_args__ = {"schema": "public"}
+    __table_initialized__ = False

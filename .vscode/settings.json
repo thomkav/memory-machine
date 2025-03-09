@@ -1,0 +1,21 @@
+{
+    "files.exclude": {
+        "**/.git": true,
+        "**/.svn": true,
+        "**/.hg": true,
+        "**/CVS": true,
+        "**/.DS_Store": true,
+        "**/Thumbs.db": true,
+        ".flyway-version": true,
+        ".sqlfluff": true,
+        ".python-version": false,
+        ".pre-commit-config.yaml": true,
+        ".isort.cfg": true,
+        ".flake8": true,
+        ".coveragerc": true,
+        ".venv": false
+    },
+    "explorerExclude.backup": {},
+    "github.copilot.chat.edits.codesearch.enabled": true,
+    "github.copilot.chat.followUps": "always",
+}
