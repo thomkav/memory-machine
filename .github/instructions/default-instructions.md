@@ -1,5 +1,3 @@
-# Copilot Edit Instructions
-When prompted in Copilot Edit, no matter what code edits are code, always do these additional tasks, in this order.
+# 'memory_machine'
 
-1. Recreate the file, `file_architecture.md`
-2. Add a log of the edit session as a sequential file in the `edit_logs` directory. The log should contain the date, time, and a brief description of the changes made. Refer to `edit_logs/example_edit_log.md` for an example.
+A user adds to docDBs or subscribes. A user tasks Researchers to development knowledge of docDB(s) and user Profile, and possibly propose changes. Access is managed by Librarians, optimized for retreival. Qualified queries and new data triggers Researcher workflows, which leverage agentic reasoning to determine whether to engage the user and/or propose changes. Storage and compute resources are allocated by the user to the researcher.
