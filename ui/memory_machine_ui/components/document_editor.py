@@ -3,7 +3,9 @@ from typing import Callable, Optional
 
 import rio
 
-from ..document_store import DocumentStore
+
+from ..constants import UIDef
+from ..document import DocumentStore
 
 
 class DocumentEditor(rio.Component):
@@ -49,13 +51,15 @@ class DocumentEditor(rio.Component):
                     text=self.name,
                     auto_adjust_height=False,
                     on_change=self.on_name_change,
-                    label="Enter document title..."
+                    label="Enter document title...",
+                    margin=3,
                 ),
                 rio.MultiLineTextInput(
                     text=self.content,
                     auto_adjust_height=False,
                     on_change=self.on_content_change,
                     label="Enter document content...",
+                    margin=3,
                 ),
             ),
             rio.Row(
@@ -63,8 +67,14 @@ class DocumentEditor(rio.Component):
                     "Save",
                     on_press=self.handle_save,
                     is_sensitive=bool(self.name and self.content),
+                    align_x=UIDef.ALIGN_XY,
+                    align_y=UIDef.ALIGN_XY,
                 ),
-                rio.Button("Cancel",
-                           on_press=self.handle_cancel),
+                rio.Button(
+                    "Cancel",
+                    on_press=self.handle_cancel,
+                    align_x=UIDef.ALIGN_XY,
+                    align_y=UIDef.ALIGN_XY,
+                ),
             ),
         )

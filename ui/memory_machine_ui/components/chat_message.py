@@ -1,11 +1,7 @@
 from __future__ import annotations
 
-import typing as t
-from dataclasses import KW_ONLY, field
-
 import rio
 
-from .. import components as comps
 from .. import conversation
 
 
@@ -56,4 +52,3 @@ class ChatMessage(rio.Component):
                 color=color,
             ),
         )
-

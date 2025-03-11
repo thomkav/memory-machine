@@ -3,7 +3,7 @@ from __future__ import annotations
 import rio
 
 from .. import components as comps
-from ..document_store import DocumentStore
+from ..document import DocumentStore
 
 
 @rio.page(
@@ -21,7 +21,7 @@ class DocumentListPage(rio.Component):
         """Navigate to the document add page."""
         self.session.navigate_to("/document/new")
 
-    def navigate_to_view(self, doc_id: str):
+    def navigate_to_view(self, doc_id: int):
         """Navigate to the document view page."""
         self.session.navigate_to(f"/document/{doc_id}")
 

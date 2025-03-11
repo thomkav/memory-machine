@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import rio
 
-from .. import components as comps
-from ..document_store import DocumentStore
+from ..components import DocumentEditor
+from ..document import DocumentStore
 
 
 @rio.page(
@@ -23,11 +23,12 @@ class DocumentAddPage(rio.Component):
     def build(self) -> rio.Component:
         return rio.Stack(
             rio.Column(
-                comps.DocumentEditor(
+                DocumentEditor(
                     store=self.store,
                     on_save=self.navigate_to_list,
                     on_cancel=self.navigate_to_list
                 ),
-                align_x=0.5,
+                grow_x=True,
+                margin=3
             )
         )

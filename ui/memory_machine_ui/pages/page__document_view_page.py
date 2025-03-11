@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import rio
 
-from .. import components as comps
-from ..document_store import DocumentStore
+from ..components import DocumentViewer
+from ..document import DocumentStore
 
 
 @rio.page(
     name="Document Details",
-    url_segment="document/:id",
+    url_segment="document/{doc_id}",
 )
 class DocumentViewPage(rio.Component):
     """
@@ -16,7 +16,7 @@ class DocumentViewPage(rio.Component):
     """
 
     store = DocumentStore()
-    doc_id = ""
+    doc_id: int
 
     def navigate_to_list(self):
         """Navigate back to the document list."""
@@ -25,9 +25,9 @@ class DocumentViewPage(rio.Component):
     def build(self) -> rio.Component:
         return rio.Stack(
             rio.Column(
-                comps.DocumentViewer(
+                DocumentViewer(
                     store=self.store,
-                    document_id=self.doc_id,
+                    doc_id=self.doc_id,
                     on_back=self.navigate_to_list
                 ),
                 margin=2,

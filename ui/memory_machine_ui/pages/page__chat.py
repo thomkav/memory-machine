@@ -85,6 +85,86 @@ class ChatPage(rio.Component):
         finally:
             self.is_loading = False
 
+    def _create_header_icons(self) -> list[rio.Component]:
+        """Create the header icons for the chat page."""
+        return [
+            rio.Icon(
+                "rio/logo:fill",
+                min_width=3,
+                min_height=3,
+                align_x=0,
+                margin=2,
+                align_y=0,
+            ),
+            rio.Icon(
+                "material/twinkle",
+                min_width=3,
+                min_height=3,
+                align_x=1,
+                margin=2,
+                align_y=0,
+            )
+        ]
+
+    def _create_message_components(self) -> list[rio.Component]:
+        """Create the message components based on conversation history."""
+        message_components: list[rio.Component] = [
+            comps.ChatMessage(msg) for msg in self.conversation.messages
+        ]
+
+        if self.is_loading:
+            message_components.append(
+                comps.GeneratingResponsePlaceholder(
+                    align_x=0.5,
+                )
+            )
+
+        return message_components
+
+    def _create_messages_container(self, column_width: int, column_align_x: float | None) -> rio.Component:
+        """Create the scrollable container for chat messages."""
+        message_components = self._create_message_components()
+
+        return rio.ScrollContainer(
+            rio.Column(
+                # Display the messages
+                *message_components,
+                # Take up superfluous space
+                rio.Spacer(),
+                spacing=1,
+                # Center the column on wide screens
+                margin=2,
+                min_width=column_width,
+                align_x=column_align_x,
+            ),
+            grow_y=True,
+            scroll_x="never",
+        )
+
+    def _create_input_row(self, column_width: int, column_align_x: float | None) -> rio.Component:
+        """Create the input row for user messages."""
+        return rio.Row(
+            rio.MultiLineTextInput(
+                label="Ask something...",
+                text=self.bind().user_message_text,
+                on_confirm=self.on_text_input_confirm,
+                is_sensitive=not self.is_loading,
+                grow_x=True,
+                min_height=8,
+            ),
+            rio.IconButton(
+                icon="material/navigate_next",
+                min_size=4,
+                on_press=self.on_text_input_confirm,
+                is_sensitive=not self.is_loading,
+                align_y=0.5,
+            ),
+            spacing=1,
+            min_width=column_width,
+            margin_bottom=1,
+            align_x=column_align_x,
+        )
+
     def build(self) -> rio.Component:
         # If there aren't any messages yet, display a placeholder
         if not self.conversation.messages:
@@ -103,75 +183,14 @@ class ChatPage(rio.Component):
             column_width = 0
             column_align_x = None
 
-        # Prepare the message components
-        message_components: list[rio.Component] = [
-            comps.ChatMessage(msg) for msg in self.conversation.messages
-        ]
-
-        if self.is_loading:
-            message_components.append(
-                comps.GeneratingResponsePlaceholder(
-                    align_x=0.5,
-                )
-            )
-
         # Combine everything into a neat package
         return rio.Stack(
-            rio.Icon(
-                "rio/logo:fill",
-                min_width=3,
-                min_height=3,
-                align_x=0,
-                margin=2,
-                align_y=0,
-            ),
-            rio.Icon(
-                "material/twinkle",
-                min_width=3,
-                min_height=3,
-                align_x=1,
-                margin=2,
-                align_y=0,
-            ),
+            *self._create_header_icons(),
             rio.Column(
                 # Messages
-                rio.ScrollContainer(
-                    rio.Column(
-                        # Display the messages
-                        *message_components,
-                        # Take up superfluous space
-                        rio.Spacer(),
-                        spacing=1,
-                        # Center the column on wide screens
-                        margin=2,
-                        min_width=column_width,
-                        align_x=column_align_x,
-                    ),
-                    grow_y=True,
-                    scroll_x="never",
-                ),
+                self._create_messages_container(column_width, column_align_x),
                 # User input
-                rio.Row(
-                    rio.MultiLineTextInput(
-                        label="Ask something...",
-                        text=self.bind().user_message_text,
-                        on_confirm=self.on_text_input_confirm,
-                        is_sensitive=not self.is_loading,
-                        grow_x=True,
-                        min_height=8,
-                    ),
-                    rio.IconButton(
-                        icon="material/navigate_next",
-                        min_size=4,
-                        on_press=self.on_text_input_confirm,
-                        is_sensitive=not self.is_loading,
-                        align_y=0.5,
-                    ),
-                    spacing=1,
-                    min_width=column_width,
-                    margin_bottom=1,
-                    align_x=column_align_x,
-                ),
+                self._create_input_row(column_width, column_align_x),
                 spacing=0.5,
             ),
         )
