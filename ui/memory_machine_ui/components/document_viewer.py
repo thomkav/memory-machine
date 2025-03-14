@@ -4,7 +4,7 @@ from typing import Callable, Optional
 
 import rio
 
-from ..document import Doc, DocumentStore
+from ..document import Doc, SupportedDocStore
 
 
 class DocumentViewer(rio.Component):
@@ -12,7 +12,7 @@ class DocumentViewer(rio.Component):
     This component displays the content and metadata of a single document.
     """
 
-    store: DocumentStore
+    doc_store: SupportedDocStore
     doc_id: int
     doc: Optional[Doc] = None
     on_back: Optional[Callable[[], None]] = None
@@ -22,7 +22,7 @@ class DocumentViewer(rio.Component):
 
     def load_document(self):
         """Load the document from the store."""
-        self.doc = self.store.get_document(self.doc_id)
+        self.doc = self.doc_store.get_document(self.doc_id)
 
     def format_date(self, dt: datetime) -> str:
         """Format a datetime for display."""

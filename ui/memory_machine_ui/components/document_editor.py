@@ -4,8 +4,8 @@ from typing import Callable, Optional
 import rio
 
 
-from ..constants import UIDef
-from ..document import DocumentStore
+from ..constants import UIDefs
+from ..document import SupportedDocStore
 
 
 class DocumentEditor(rio.Component):
@@ -13,7 +13,7 @@ class DocumentEditor(rio.Component):
     This component provides a form for creating new documents.
     """
 
-    store: DocumentStore
+    store: SupportedDocStore
     name: str = ""
     content: str = ""
     on_save: Optional[Callable[[], None]] = None
@@ -67,14 +67,14 @@ class DocumentEditor(rio.Component):
                     "Save",
                     on_press=self.handle_save,
                     is_sensitive=bool(self.name and self.content),
-                    align_x=UIDef.ALIGN_XY,
-                    align_y=UIDef.ALIGN_XY,
+                    align_x=UIDefs.ALIGN_XY,
+                    align_y=UIDefs.ALIGN_XY,
                 ),
                 rio.Button(
                     "Cancel",
                     on_press=self.handle_cancel,
-                    align_x=UIDef.ALIGN_XY,
-                    align_y=UIDef.ALIGN_XY,
+                    align_x=UIDefs.ALIGN_XY,
+                    align_y=UIDefs.ALIGN_XY,
                 ),
             ),
         )

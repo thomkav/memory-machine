@@ -3,10 +3,9 @@ from __future__ import annotations
 import rio
 import asyncio
 
-from ..components.standards import (
+from ..common import (
     make_button,
     make_text,
-    stack,
 )
 
 
@@ -44,6 +43,6 @@ class AsyncRetrievalDemo(rio.Component):
         )
 
         if self.content is None:
-            return stack(text, button, progress_circle)
+            return rio.Column(text, button, progress_circle)
         else:
-            return stack(text, button)
+            return rio.Column(text, button)

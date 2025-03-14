@@ -2,37 +2,58 @@ from __future__ import annotations
 
 import rio
 
-from .. import components as comps
-from ..document import DocumentStore
+
+from ..common import DocStorePageBase
+from ..components import (
+    DocumentStoreDocList,
+)
+from ..document import InRepoLocalFilesystemDocumentStore
+from ..navigation import Navigator
 
 
 @rio.page(
     name="Document List",
     url_segment="documents",
 )
-class DocumentListPage(rio.Component):
+class DocumentListPage(DocStorePageBase):
     """
     Page for viewing a list of documents in the store.
     """
+    def __init__(self) -> None:
+        navigator = Navigator()
+        super().__init__(
+            doc_store=InRepoLocalFilesystemDocumentStore(
+                namespace="default",
+            ),
+            navigator=navigator,
+        )
 
-    store = DocumentStore()
+    def __post_init__(self):
+        self.navigator = Navigator(self.session)
 
-    def navigate_to_add(self):
+    def handle_add_document(self) -> None:
         """Navigate to the document add page."""
-        self.session.navigate_to("/document/new")
+        self.navigator.to_document_add()
 
-    def navigate_to_view(self, doc_id: int):
+    def handle_select_document(self, doc_id: int) -> None:
         """Navigate to the document view page."""
-        self.session.navigate_to(f"/document/{doc_id}")
+
+    def handle_delete_document(self, doc_id: int) -> None:
+        """Handle document deletion."""
+        self.doc_store.delete_document(doc_id=doc_id)
+
+    def handle_view_document(self, doc_id: int) -> None:
+        """Navigate to the document view page."""
+        self.navigator.to_document_view(doc_id=doc_id)
 
     def build(self) -> rio.Component:
-        return rio.Stack(
-            rio.Column(
-                comps.DocumentList(
-                    store=self.store,
-                    on_add_document=self.navigate_to_add,
-                    on_select_document=self.navigate_to_view
-                ),
-                margin=1,
-            )
+        return rio.Column(
+            DocumentStoreDocList(
+                doc_store=self.doc_store,
+                on_add_document=self.handle_add_document,
+                on_select_document=None,
+                on_delete_document=self.handle_delete_document,
+                on_view_document=self.handle_view_document,
+            ),
+            margin=1,
         )

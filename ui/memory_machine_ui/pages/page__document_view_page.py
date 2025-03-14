@@ -2,34 +2,37 @@ from __future__ import annotations
 
 import rio
 
-from ..components import DocumentViewer
-from ..document import DocumentStore
+from ..document import InRepoLocalFilesystemDocumentStore, SupportedDocStore
+from ..navigation import Navigator
+
+
+from ..constants import URLSegments
+from ..components import (
+    DocumentViewer,
+)
 
 
 @rio.page(
     name="Document Details",
-    url_segment="document/{doc_id}",
+    url_segment=URLSegments.DOCUMENT_VIEW_PATTERN,
 )
 class DocumentViewPage(rio.Component):
     """
     Page for viewing a single document's details.
     """
-
-    store = DocumentStore()
     doc_id: int
+    doc_store: SupportedDocStore = InRepoLocalFilesystemDocumentStore(
+        namespace="default",
+    )
+    navigator: Navigator = Navigator()
 
-    def navigate_to_list(self):
+    def navigate_to_document_list(self):
         """Navigate back to the document list."""
-        self.session.navigate_to("/documents")
+        self.navigator.to_document_list()
 
     def build(self) -> rio.Component:
-        return rio.Stack(
-            rio.Column(
-                DocumentViewer(
-                    store=self.store,
-                    doc_id=self.doc_id,
-                    on_back=self.navigate_to_list
-                ),
-                margin=2,
-            )
+        return DocumentViewer(
+            doc_store=self.doc_store,
+            doc_id=self.doc_id,
+            on_back=self.navigate_to_document_list,
         )

@@ -18,4 +18,7 @@
     "explorerExclude.backup": {},
     "github.copilot.chat.edits.codesearch.enabled": true,
     "github.copilot.chat.followUps": "always",
+    "logViewer.watch": [
+        "*/memory_machine_ui.log"
+    ]
 }
