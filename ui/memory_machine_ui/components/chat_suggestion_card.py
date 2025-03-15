@@ -1,11 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import KW_ONLY, field
-import typing as t
-
 import rio
 
-from .. import components as comps
 
 class ChatSuggestionCard(rio.Component):
     """

@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-from dataclasses import KW_ONLY, field
-import typing as t
 
 import rio
 
 from .. import components as comps
+
 
 class EmptyChatPlaceholder(rio.Component):
     """
@@ -108,4 +107,3 @@ class EmptyChatPlaceholder(rio.Component):
                 margin_top=1,
             ),
         )
-
