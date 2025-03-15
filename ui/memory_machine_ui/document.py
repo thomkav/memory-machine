@@ -10,7 +10,7 @@ import json
 from .constants import FilePaths
 from .custom_logging import LOGGER
 
-DOC_FILE_EXT = '.doc'
+DOC_FILE_EXT = '.json'
 
 
 def serialize_datetime(
@@ -186,11 +186,10 @@ class DocStore(metaclass=ABCMeta):
         for doc in self.doc_map.values():
             self.save_document(doc=doc)
 
-    def get_doc_map(self, remote=False) -> DocMap:
-        if remote:
-            return self._get_doc_map_from_store()
-        else:
-            return self.doc_map
+    def get_doc_map(self, refresh=False) -> DocMap:
+        if refresh:
+            self.doc_map = self._get_doc_map_from_store()
+        return self.doc_map
 
     def get_document(self, doc_id: DocID) -> Optional[Doc]:
         """Get a document by ID."""

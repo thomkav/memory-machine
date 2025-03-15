@@ -1,9 +1,6 @@
 # This file contains the standard components used in the UI
 import rio
 
-from .document import InRepoLocalFilesystemDocumentStore, SupportedDocStore
-from .navigation import Navigator
-
 
 DONT_GROW_CENTER_ALIGN = {
     "grow_x": False,
@@ -40,15 +37,3 @@ def make_button(
         content=content,
         **kwargs,
     )
-
-
-class DocStorePageBase(rio.Component):
-
-    doc_store: SupportedDocStore = InRepoLocalFilesystemDocumentStore(
-        namespace="default",
-    )
-    navigator: Navigator = Navigator()
-
-    def __post_init__(self):
-
-        self.navigator = Navigator(self.session)

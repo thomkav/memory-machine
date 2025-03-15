@@ -1,23 +1,23 @@
-import dataclasses
+from dataclasses import dataclass, field
 import typing as t
 from datetime import datetime, timezone
 
 import openai
 
 
-@dataclasses.dataclass
+@dataclass
 class ChatMessage:
     """
     A simple storage class containing all the information needed for a single
     chat message.
     """
 
-    role: t.Literal["user", "assistant"]
-    timestamp: datetime
+    role: t.Literal["user", "assistant", "function", "tool"]
     text: str
+    timestamp: datetime = datetime.now(tz=timezone.utc)
 
 
-@dataclasses.dataclass
+@dataclass
 class Conversation:
     """
     The start of the show. This class contains a list of messages and can
@@ -25,7 +25,7 @@ class Conversation:
     """
 
     # The entire message history
-    messages: list[ChatMessage] = dataclasses.field(default_factory=list)
+    messages: list[ChatMessage] = field(default_factory=list)
 
     async def respond(self, client: openai.AsyncOpenAI) -> ChatMessage:
         """

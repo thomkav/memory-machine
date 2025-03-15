@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import rio
 
-from ..common import DocStorePageBase
+from ..components.document_list import DocStorePageBase
+
 from ..components import DocumentEditor
 
 

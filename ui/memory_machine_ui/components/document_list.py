@@ -6,9 +6,11 @@ import rio
 
 from ..common import make_button
 from ..custom_logging import LOGGER
+from ..navigation import Navigator
 from ..document import (
     Doc,
     DocID,
+    SupportedDocStore,
     InRepoLocalFilesystemDocumentStore,
 )
 
@@ -24,7 +26,7 @@ class DocumentListCopy:
     ADD_DOCUMENT_BUTTON_TEXT = "Add Document"
     DELETE_DOCUMENT_BUTTON_TEXT = "Delete Document"
     VIEW_DOCUMENT_BUTTON_TEXT = "View Document"
-    LOAD_DOCUMENTS_BUTTON_TEXT = "Load Docs"
+    REFRESH_DOC_STORE_BUTTON_TEXT = "Refresh Doc Store"
     SAVE_DOCUMENTS_BUTTON_TEXT = "Save Docs"
     NO_DOCUMENTS_TEXT = "No documents found"
 
@@ -103,10 +105,10 @@ class DocumentStoreDocList(rio.Component):
 
     doc_store: InRepoLocalFilesystemDocumentStore
     selected_doc_id: Optional[DocID] = None
-    on_select_document: Optional[DocumentAction] = None
     on_add_document: Optional[Callable[[], None]] = None
     on_delete_document: Optional[DocumentAction] = None
     on_view_document: Optional[DocumentAction] = None
+    on_select_document: Optional[DocumentAction] = None
     debug_output: Any = None
 
     # Button specifications: (label, handler_method_name, needs_selection)
@@ -114,38 +116,47 @@ class DocumentStoreDocList(rio.Component):
         (DocumentListCopy.ADD_DOCUMENT_BUTTON_TEXT, "handle_add", False),
         (DocumentListCopy.VIEW_DOCUMENT_BUTTON_TEXT, "handle_view", True),
         (DocumentListCopy.DELETE_DOCUMENT_BUTTON_TEXT, "handle_delete", True),
-        (DocumentListCopy.LOAD_DOCUMENTS_BUTTON_TEXT, "handle_refresh", False),
+        (DocumentListCopy.REFRESH_DOC_STORE_BUTTON_TEXT, "handle_refresh_doc_store", False),
         (DocumentListCopy.SAVE_DOCUMENTS_BUTTON_TEXT, "handle_save", False),
-        ("Force Refresh", "handle_force_refresh", False),
+        ("Force Refresh", "handle_force_refresh_ui", False),
         ("Doc State", "handle_debug", False),
     ]
 
     def __post_init__(self):
-        self.handle_refresh()
+        self.handle_refresh_doc_store()
         self.force_refresh()
 
-    def select_document(self, doc_id: DocID):
+    def handle_select(self, doc_id: DocID):
         """Select a document by index."""
         LOGGER.debug(f"Selecting document {doc_id}")
+        self.selected_doc_id = doc_id
         if self.on_select_document:
             self.on_select_document(doc_id)
 
-    def handle_delete(self, doc_id: DocID):
+    def handle_delete(self):
         """Handle document deletion."""
-        self.doc_store.delete_document(doc_id=doc_id)
+        if self.on_view_document:
+            if self.selected_doc_id:
+                self.doc_store.delete_document(self.selected_doc_id)
+            else:
+                self.debug_output = "No document selected."
+        self.force_refresh()
 
     def handle_view(self):
         """Handle document view."""
-        doc_id = 0
         if self.on_view_document:
-            self.on_view_document(doc_id)
+            if self.selected_doc_id:
+                self.on_view_document(self.selected_doc_id)
+            else:
+                self.debug_output = "No document selected."
+        self.force_refresh()
 
     def handle_add(self):
         """Handle document add."""
         if self.on_add_document:
             self.on_add_document()
 
-    def handle_refresh(self):
+    def handle_refresh_doc_store(self):
         """Handle document load."""
         self.doc_store.refresh()
         self.force_refresh()
@@ -157,7 +168,7 @@ class DocumentStoreDocList(rio.Component):
         self.debug_output = self.doc_store.debug_state()
         self.force_refresh()
 
-    def handle_force_refresh(self):
+    def handle_force_refresh_ui(self):
         self.force_refresh()
 
     def _create_document_cards_component(self) -> rio.Component:
@@ -167,7 +178,7 @@ class DocumentStoreDocList(rio.Component):
             build_document_card(
                 doc=doc,
                 selected_doc_id=self.selected_doc_id,
-                on_select=self.select_document,
+                on_select=self.handle_select,
             ) for doc in self.doc_store.get_doc_map().values()
         ]
 
@@ -242,4 +253,19 @@ class DocumentStoreDocList(rio.Component):
 
         return rio.Column(
             *ordered_components,
+        )
+
+
+class DocStorePageBase(rio.Component):
+
+    doc_store: SupportedDocStore = InRepoLocalFilesystemDocumentStore(
+        namespace="default",
+    )
+    navigator: Navigator = Navigator()
+
+    def __post_init__(self):
+
+        self.navigator = Navigator(self.session)
+        self.doc_store_list = DocumentStoreDocList(
+            doc_store=self.doc_store,
         )

@@ -1,20 +1,44 @@
 from __future__ import annotations
 
 from dataclasses import field
-from datetime import datetime, timezone
 
 import openai
 import rio
 
-from .. import components as comps
+from ..custom_logging import LOGGER
+
+from ..document import DocID
+
+
+from ..components import (
+    ChatMessage,
+    DocStorePageBase,
+    GeneratingResponsePlaceholder,
+    EmptyChatPlaceholder,
+    DocumentStoreDocList,
+)
 from .. import conversation
+
+
+class ChatPageComponentNames:
+
+    DOCUMENT_LIST = "document_list"
+
+    SHARED_COMPONENTS_DISPLAY_ORDER = [
+        DOCUMENT_LIST
+    ]
+
+    MESSAGES_CONTAINER = "messages_container"
+    USER_INPUT = "user_input"
+
+    EMPTY_CHAT = "empty_chat"
 
 
 @rio.page(
     name="Chat",
     url_segment="",
 )
-class ChatPage(rio.Component):
+class ChatPage(DocStorePageBase):
     """
     This is the only page in the entire app. It displays the chat history, a
     text input for the user to ask questions, and a placeholder if there is no
@@ -33,12 +57,28 @@ class ChatPage(rio.Component):
     # This will be used for the text input to store its result in
     user_message_text: str = ""
 
+    document_context: str = ""
+
     # If this is `True`, the app is currently generating a response. An
     # indicator will be displayed to the user, and the text input will be
     # disabled.
     is_loading: bool = False
 
-    async def on_text_input_confirm(self, *_) -> None:
+    def __post_init__(self):
+        self.doc_store.refresh()
+
+    def handle_select(self, doc_id: DocID) -> None:
+        doc = self.doc_store.get_document(doc_id=doc_id)
+        LOGGER.info(f"Document Selected {doc}")
+        assert doc
+        self.document_context = f"Document Details: Name: {doc.name}, Content: {doc.content}"
+
+    def handle_enter(self):
+        LOGGER.debug("Entered something into the chat.")
+
+        _ = self.on_text_input_confirm()
+
+    async def on_text_input_confirm(self) -> None:
         """
         Called when the text input is confirmed, or the "send" button pressed.
         The function ensures that the input isn't empty. If that's the case the
@@ -46,8 +86,10 @@ class ChatPage(rio.Component):
         """
         # If the user hasn't typed anything, do nothing
         message_text = self.user_message_text.strip()
+        LOGGER.info(f"Received message text {message_text}")
 
         if not message_text:
+            LOGGER.info("No message text")
             return
 
         # Empty the text input so the user can type another message
@@ -62,11 +104,22 @@ class ChatPage(rio.Component):
         message to the chat history, generates a response, and adds that to the
         chat history as well.
         """
+        LOGGER.info(f"Asking question: {message_text}")
+
+        # If document context is provided,
+        # add it as a unique message
+        if self.document_context:
+            self.conversation.messages.append(
+                conversation.ChatMessage(
+                    role="user",
+                    text=self.document_context,
+                )
+            )
+
         # Add the user's message to the chat history
         self.conversation.messages.append(
             conversation.ChatMessage(
                 role="user",
-                timestamp=datetime.now(tz=timezone.utc),
                 text=message_text,
             )
         )
@@ -109,12 +162,12 @@ class ChatPage(rio.Component):
     def _create_message_components(self) -> list[rio.Component]:
         """Create the message components based on conversation history."""
         message_components: list[rio.Component] = [
-            comps.ChatMessage(msg) for msg in self.conversation.messages
+            ChatMessage(msg) for msg in self.conversation.messages
         ]
 
         if self.is_loading:
             message_components.append(
-                comps.GeneratingResponsePlaceholder(
+                GeneratingResponsePlaceholder(
                     align_x=0.5,
                 )
             )
@@ -147,7 +200,7 @@ class ChatPage(rio.Component):
             rio.MultiLineTextInput(
                 label="Ask something...",
                 text=self.bind().user_message_text,
-                on_confirm=self.on_text_input_confirm,
+                on_confirm=None,
                 is_sensitive=not self.is_loading,
                 grow_x=True,
                 min_height=8,
@@ -165,15 +218,9 @@ class ChatPage(rio.Component):
             align_x=column_align_x,
         )
 
-    def build(self) -> rio.Component:
-        # If there aren't any messages yet, display a placeholder
-        if not self.conversation.messages:
-            return comps.EmptyChatPlaceholder(
-                user_message_text=self.user_message_text,
-                on_question=self.on_question,
-                align_x=0.5,
-                align_y=0.5,
-            )
+    def _generate_components(self) -> dict[str, rio.Component]:
+
+        components_by_name = {}
 
         # Center the chat on wide screens
         if self.session.window_width > 40:
@@ -183,14 +230,59 @@ class ChatPage(rio.Component):
             column_width = 0
             column_align_x = None
 
+        components_by_name[
+            ChatPageComponentNames.EMPTY_CHAT
+        ] = EmptyChatPlaceholder(
+            user_message_text=self.user_message_text,
+            on_question=self.on_question,
+            align_x=0.5,
+            align_y=0.5,
+        )
+
+        # Messages
+        components_by_name[
+            ChatPageComponentNames.MESSAGES_CONTAINER
+        ] = self._create_messages_container(column_width, column_align_x)
+
+        # User input
+        components_by_name[
+            ChatPageComponentNames.USER_INPUT
+        ] = self._create_input_row(column_width, column_align_x)
+
+        components_by_name[
+            ChatPageComponentNames.DOCUMENT_LIST
+        ] = rio.Row(
+            DocumentStoreDocList(
+                doc_store=self.doc_store,
+                on_select_document=self.handle_select,
+            )
+        )
+
+        return components_by_name
+
+    def build(self) -> rio.Component:
+
+        name_to_component = self._generate_components()
+        ordered_components = [
+            name_to_component[name] for name in ChatPageComponentNames.SHARED_COMPONENTS_DISPLAY_ORDER
+        ]
+
+        # If there aren't any messages yet, display a placeholder
+        if not self.conversation.messages:
+            ordered_components.append(
+                name_to_component[ChatPageComponentNames.EMPTY_CHAT]
+            )
+        else:
+            ordered_components.extend([
+                name_to_component[ChatPageComponentNames.MESSAGES_CONTAINER],
+                name_to_component[ChatPageComponentNames.USER_INPUT],
+            ])
+
         # Combine everything into a neat package
         return rio.Stack(
             *self._create_header_icons(),
             rio.Column(
-                # Messages
-                self._create_messages_container(column_width, column_align_x),
-                # User input
-                self._create_input_row(column_width, column_align_x),
+                *ordered_components,
                 spacing=0.5,
             ),
         )
