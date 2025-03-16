@@ -6,7 +6,7 @@
 app-type = "website"
 
 # The name of your Python module
-main-module = "memory_machine_ui"
+main-module = "app"
 
 # All files which are part of your project. Changes to these will trigger a
 # reload and they will be packed up when deploying.

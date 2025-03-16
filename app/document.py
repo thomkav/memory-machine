@@ -255,7 +255,7 @@ class InRepoLocalFilesystemDocumentStore(LocalFilesystemDocStore):
     next_idx = 0
 
     def __init__(self, namespace: str):
-        super().__init__(namespace, FilePaths.UI_LOCAL_DOC_EXPORT_DIR)
+        super().__init__(namespace, FilePaths.MOCK_DOC_STORE_DIR)
 
     def seed_db(self):
         docs = generate_docs()

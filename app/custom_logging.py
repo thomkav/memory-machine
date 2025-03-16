@@ -5,13 +5,13 @@ Module to define a custom logging class for use in the Memory Machine UI.
 import logging
 import sys
 
-from memory_machine_ui.constants import FilePaths
+from app.constants import FilePaths
 
 # Define the log format
 LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
 # Define the log file
-LOG_FILE = FilePaths.UI_ROOT_DIR / "memory_machine_ui.log"
+LOG_FILE = FilePaths.REPO_ROOT_DIR / "memory_machine_ui.log"
 
 # Define the log level
 LOG_LEVEL = logging.DEBUG
