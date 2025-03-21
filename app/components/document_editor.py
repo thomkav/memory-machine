@@ -1,8 +1,8 @@
 from __future__ import annotations
+
 from typing import Callable, Optional
 
 import rio
-
 
 from ..constants import UIDefs
 from ..document import SupportedDocStore

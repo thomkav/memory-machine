@@ -1,7 +1,6 @@
 # This file contains the standard components used in the UI
 import rio
 
-
 DONT_GROW_CENTER_ALIGN = {
     "grow_x": False,
     "grow_y": False,

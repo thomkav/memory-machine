@@ -2,14 +2,10 @@ from __future__ import annotations
 
 import rio
 
+from ..components import DocumentViewer
+from ..constants import URLSegments
 from ..document import InRepoLocalFilesystemDocumentStore, SupportedDocStore
 from ..navigation import Navigator
-
-
-from ..constants import URLSegments
-from ..components import (
-    DocumentViewer,
-)
 
 
 @rio.page(

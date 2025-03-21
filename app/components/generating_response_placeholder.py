@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from dataclasses import KW_ONLY, field
 import typing as t
+from dataclasses import KW_ONLY, field
 
 import rio
 
 from .. import components as comps
+
 
 class GeneratingResponsePlaceholder(rio.Component):
     """

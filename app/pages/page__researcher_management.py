@@ -1,8 +1,10 @@
-import rio
 from typing import Dict
 
-from ..common import make_text, make_button
-from ..researcher_model import ResearcherModel, ResearcherListModel
+import rio
+
+from ..common import make_button, make_text
+from ..researcher_model import ResearcherListModel, ResearcherModel
+
 
 
 class ResearcherManagementComponentNames:
@@ -20,6 +22,10 @@ class ResearcherManagementComponentNames:
     ]
 
 
+@rio.page(
+    name="Researcher Management",
+    url_segment="researcher_management",
+)
 class ResearcherManagementPage(rio.Component):
     """Page for managing researchers in the system."""
 

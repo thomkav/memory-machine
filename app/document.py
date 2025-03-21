@@ -1,11 +1,10 @@
+import itertools
+import json
 from abc import ABCMeta, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
-import itertools
 from pathlib import Path
 from typing import Any, Callable, Optional
-
-import json
 
 from .constants import FilePaths
 from .custom_logging import LOGGER

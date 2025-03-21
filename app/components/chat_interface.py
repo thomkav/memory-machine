@@ -1,8 +1,9 @@
 from typing import Callable
+
 import rio
 
+from ..chat import ChatMessage, ChatRole
 from ..common import make_button, make_text
-from ..conversation import ChatRole, ChatMessage
 from ..researcher_agents import Researcher
 
 
@@ -20,7 +21,12 @@ class ChatInterfaceComponentNames:
     ]
 
 
-class ChatInterface(rio.Component):
+ENABLED_RESEARCHERS: list[Researcher] = [
+    Researcher(name="Researcher 1"),
+]
+
+
+class ResearcherChatInterface(rio.Component):
     """
     A reusable chat interface component for interacting with researchers.
     """
@@ -32,11 +38,11 @@ class ChatInterface(rio.Component):
         **kwargs
     ):
         super().__init__(**kwargs)
-        self.enabled_researchers: list[Researcher] = []
+        self.enabled_researchers: list[Researcher] = ENABLED_RESEARCHERS
         self.on_message_sent = on_message_sent
         self.height = height
         self.user_message = ""
-        self.messages: list[ChatMessage] = []   
+        self.messages: list[ChatMessage] = []
         self.researcher: Researcher | None = None
         self.user_input_prefill_options = []
 
@@ -46,9 +52,17 @@ class ChatInterface(rio.Component):
         self.messages = [ChatMessage(
             name=researcher.name,
             role=ChatRole.SYSTEM,
-            content=researcher.instructions
+            content=researcher.objective,
         )]
         self.user_input_prefill_options = []
+        self.force_refresh()
+
+    def set_default_researcher(self):
+        """Set the default researcher for the chat interface."""
+        if not self.enabled_researchers:
+            raise ValueError("No enabled researchers available.")
+        self.set_researcher(self.enabled_researchers[0])
+        assert self.researcher is not None, "Researcher should be set after initialization."
         self.force_refresh()
 
     def add_user_message(self, message: str):
@@ -60,6 +74,7 @@ class ChatInterface(rio.Component):
                 content=message
             )
         )
+        self.user_input_prefill_options = []
         self.force_refresh()
 
     def add_researcher_message(
@@ -77,7 +92,18 @@ class ChatInterface(rio.Component):
             )
         )
         self.user_input_prefill_options = user_input_prefill_options
+        self.force_refresh()
 
+    def add_system_message(self, message: str):
+        """Add a system message to the chat history."""
+        self.messages.append(
+            ChatMessage(
+                name="System",
+                role=ChatRole.SYSTEM,
+                content=message
+            )
+        )
+        self.user_input_prefill_options = []
         self.force_refresh()
 
     def send_message(self, *args):
@@ -91,7 +117,7 @@ class ChatInterface(rio.Component):
         # Add user message to chat history
         self.add_user_message(message=self.user_message)
 
-        # Call 
+        # Call the researcher to get a response
         messages = self.researcher.reply(
             messages=self.messages,
         )

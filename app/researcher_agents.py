@@ -1,38 +1,52 @@
+from typing import List
+
+from .llm import LLMProvider, OpenAIConfig
 from openai import Client as OpenAIClient
 from openai.types.chat import (
     ChatCompletionSystemMessageParam,
     ChatCompletionUserMessageParam,
 )
-from typing import List, Optional
-from pydantic import BaseModel
-from llm import LLMProvider, OpenAIConfig
-from conversation import ChatMessage, ChatRole
+from pydantic import BaseModel, Field
+
+from .chat import ChatMessage, ChatRole
 
 
-class LLMChatClient:
-    """LLMChatParticipant class that represents an AI agent in the chat."""
+def get_openai_client() -> tuple[OpenAIClient, OpenAIConfig]:
+    """Get the OpenAI client instance."""
+    config = OpenAIConfig()
+    client = OpenAIClient(api_key=config.api_key)
+    return client, config
 
-    role = ChatRole.ASSISTANT
+
+class LLMChatClient(BaseModel):
+    """
+    LLMChatClient class that encapsulates the logic for interacting with a language model.
+    This class is responsible for processing messages and generating responses
+    using the specified language model provider.
+    """
+
+    name: str = "LazyResearcher"
+    description: str = "A lazy researcher agent that always responds with 'Hello, world!'"
+    role: ChatRole = Field(
+        default=ChatRole.ASSISTANT,
+        description="The role of the agent in the chat.",
+    )
     instructions: str = "Always respond with the same response: 'Hello, world!'"
-    context: dict = {}
+    context: dict = Field(
+        default_factory=dict,
+        description="Context for the agent's responses.",
+    )
     llm_provider: str = LLMProvider.OPENAI
-    openai_config: OpenAIConfig = OpenAIConfig()
-    openai_client: Optional[OpenAIClient] = None
-
-    def __init__(self):
-        """Initialize the LLMChatParticipant with the given configuration."""
-        self.openai_client = OpenAIClient(api_key=self.openai_config.api_key)
 
     def _respond_with_openai(
         self,
         message: str,
     ) -> str:
-
         """Process a user message using the OpenAI API."""
-        assert self.openai_client is not None, "OpenAI client is not initialized."
 
-        completion = self.openai_client.chat.completions.create(
-            model=self.openai_config.model,
+        client, config = get_openai_client()
+        completion = client.chat.completions.create(
+            model=config.model,
             messages=[
                 ChatCompletionSystemMessageParam(
                     role=ChatRole.SYSTEM,
@@ -43,8 +57,8 @@ class LLMChatClient:
                     content=message
                 ),
             ],
-            max_tokens=self.openai_config.max_tokens,
-            temperature=self.openai_config.temperature
+            max_tokens=config.max_tokens,
+            temperature=config.temperature
         )
 
         response = completion.choices[0].message.content
@@ -55,7 +69,6 @@ class LLMChatClient:
     def process_message(self, message: str) -> str:
         """Process a message and generate a response."""
         if self.llm_provider == LLMProvider.OPENAI:
-            assert self.openai_client is not None, "OpenAI client is not initialized."
             response = self._respond_with_openai(
                 message=message,
             )
@@ -66,7 +79,6 @@ class LLMChatClient:
 
     def reply(self, chat_messages: List[ChatMessage]) -> ChatMessage:
         """Generate a response based on the chat history."""
-        # This method should be implemented in subclasses
 
         message = chat_messages[-1].content
         if not message:
@@ -78,30 +90,13 @@ class LLMChatClient:
 
         # Create a new ChatMessage object with the response
         message = ChatMessage(
+            name=self.name,
             role=self.role,
             content=response,
             user_input_prefill_options=[]
         )
 
         return message
-
-    @property
-    def client(self):
-        """Get the currently configured LLM client."""
-        if self.llm_provider == LLMProvider.OPENAI:
-            return self.openai_client
-        else:
-            raise ValueError(f"Unsupported LLM provider: {self.llm_provider}")
-
-
-class ResearcherConfig(BaseModel):
-    """Configuration class for the Researcher agent."""
-
-    name: str = "LazyResearcher"
-    instructions: str = "After replying using your agent, append an additional message, 'Goodbye!'"
-    memory: dict = {}
-    llm_provider: str = LLMProvider.OPENAI
-    openai_config: OpenAIConfig = OpenAIConfig()
 
 
 class Researcher(BaseModel):
@@ -110,25 +105,21 @@ class Researcher(BaseModel):
     """
 
     name: str = "LazyResearcher"
+    objective: str = "This researcher has simple instructions and needs to be configured."
     instructions: str = "After replying using your agent, spin up an agent to append an additional message, 'Goodbye!'"
-    memory: dict = {}
+    memory: dict = Field(
+        default_factory=dict,
+        description="Memory for storing conversation context.",
+    )
 
     @property
     def chat_client(self) -> LLMChatClient:
         """Get the currently configured LLM client."""
         return LLMChatClient()
 
-    def __init__(self, config: Optional[ResearcherConfig] = None):
-        """Initialize the researcher with the given configuration."""
-
-        if config:
-            self.name = config.name
-            self.instructions = config.instructions
-            self.memory = config.memory
-
     def reply(
         self,
-        messages: list[ChatMessage]
+        messages: list[ChatMessage],
     ) -> list[ChatMessage]:
         """Generate any number of messages based on the chat history."""
 
@@ -140,5 +131,14 @@ class Researcher(BaseModel):
             chat_messages=messages
         )
         responses.append(chat_client_message)
+
+        # Add a goodbye message
+        goodbye_message = ChatMessage(
+            name=self.name,
+            role=ChatRole.ASSISTANT,
+            content="Goodbye!",
+            user_input_prefill_options=[]
+        )
+        responses.append(goodbye_message)
 
         return responses

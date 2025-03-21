@@ -1,12 +1,10 @@
 from __future__ import annotations
 
-import rio
 import asyncio
 
-from ..common import (
-    make_button,
-    make_text,
-)
+import rio
+
+from ..common import make_button, make_text
 
 
 @rio.page(

@@ -4,10 +4,10 @@ This module defines database models for the memory-machine application.
 
 from datetime import datetime
 from typing import Optional
-from sqlalchemy import ForeignKey, String, Text, DateTime
-from sqlalchemy.orm import Mapped, mapped_column
 
 from models.base import SchemaSpecificBaseModel
+from sqlalchemy import DateTime, ForeignKey, String, Text
+from sqlalchemy.orm import Mapped, mapped_column
 
 
 class User(SchemaSpecificBaseModel):
@@ -39,15 +39,15 @@ class Library(SchemaSpecificBaseModel):
     )
 
 
-class Researcher(SchemaSpecificBaseModel):
-    """Researcher model extending user information for research purposes."""
+# class Researcher(SchemaSpecificBaseModel):
+#     """Researcher model extending user information for research purposes."""
 
-    __tablename__ = "researchers"
+#     __tablename__ = "researchers"
 
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, unique=True)
-    namespace: Mapped[str] = mapped_column(String(50), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.now, onupdate=datetime.now
-    )
+#     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+#     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, unique=True)
+#     namespace: Mapped[str] = mapped_column(String(50), nullable=False)
+#     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+#     updated_at: Mapped[datetime] = mapped_column(
+#         DateTime, default=datetime.now, onupdate=datetime.now
+#     )

@@ -1,18 +1,14 @@
 from __future__ import annotations
+
 from datetime import datetime
-from typing import Any, Callable, Optional, List, Tuple
+from typing import Any, Callable, List, Optional, Tuple
 
 import rio
 
 from ..common import make_button
 from ..custom_logging import LOGGER
+from ..document import Doc, DocID, InRepoLocalFilesystemDocumentStore, SupportedDocStore
 from ..navigation import Navigator
-from ..document import (
-    Doc,
-    DocID,
-    SupportedDocStore,
-    InRepoLocalFilesystemDocumentStore,
-)
 
 
 def format_date(dt: datetime) -> str:

@@ -2,9 +2,10 @@
 LLM (Large Language Model) configuration for the researcher agent.
 """
 
-from enum import Enum
 import os
+from enum import Enum
 from typing import Optional
+
 from pydantic import BaseModel
 
 

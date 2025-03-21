@@ -1,15 +1,18 @@
 from __future__ import annotations
+
 from enum import Enum
+
 import rio
 
+from ..chat import ChatMessage, ChatRole
+from ..components.chat_interface import ResearcherChatInterface
 from ..common import make_button, make_text
 from ..components.document_list import DocStorePageBase
 from ..constants import PageNames, URLSegments
-from ..conversation import Conversation, ChatMessage
 from ..researcher_agents import Researcher
 
 
-class AgentWorkflowsComponentNames(Enum)
+class AgentWorkflowsComponentNames(Enum):
     """Component names used in the AgentWorkflows page."""
 
     HEADER = "header"
@@ -17,12 +20,13 @@ class AgentWorkflowsComponentNames(Enum)
     SUGGESTED_QUESTIONS = "suggested_questions"
     INPUT_AREA = "input_area"
 
-    DISPLAY_ORDER = [
-        # HEADER,
-        CHAT_HISTORY,
-        # SUGGESTED_QUESTIONS,
-        # INPUT_AREA,
-    ]
+
+DISPLAY_ORDER = [
+    # HEADER,
+    AgentWorkflowsComponentNames.CHAT_HISTORY,
+    # SUGGESTED_QUESTIONS,
+    # INPUT_AREA,
+]
 
 
 @rio.page(
@@ -36,7 +40,6 @@ class AgentWorkflowsPage(DocStorePageBase):
 
     response_text: str = ""
     user_message: str = ""
-    conversation: Conversation = Conversation()
     user_input_prefill_options: list[str] = []
     researcher: Researcher = Researcher()
 
@@ -58,8 +61,9 @@ class AgentWorkflowsPage(DocStorePageBase):
         self.force_refresh()
         self.conversation.add_message(
             ChatMessage(
-                role="user",
-                content=self.user_message,
+                name=self.researcher.name,
+                role=ChatRole.USER,
+                content=message,
                 user_input_prefill_options=self.user_input_prefill_options,
             ),
         )
@@ -81,7 +85,7 @@ class AgentWorkflowsPage(DocStorePageBase):
         """Create the chat history component."""
         return rio.Container(
             rio.Column(
-                *[self._build_chat_message(msg) for msg in self.conversation.history],
+                *[self._build_chat_message(msg) for msg in self.researcher.chat_client],
                 spacing=2,
             ),
             grow_x=True,
@@ -155,7 +159,7 @@ class AgentWorkflowsPage(DocStorePageBase):
         components = self._generate_components()
 
         ordered_components = [
-            components[name] for name in AgentWorkflowsComponentNames.DISPLAY_ORDER
+            components[name] for name in DISPLAY_ORDER
         ]
 
         return rio.Column(
