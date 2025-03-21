@@ -1,77 +1,38 @@
-from dataclasses import dataclass, field
-import typing as t
-from datetime import datetime, timezone
 
-import openai
-
-
-@dataclass
-class ChatMessage:
-    """
-    A simple storage class containing all the information needed for a single
-    chat message.
-    """
-
-    role: t.Literal["user", "assistant", "function", "tool"]
-    text: str
-    timestamp: datetime = datetime.now(tz=timezone.utc)
+from enum import Enum
+from typing import List
+from pydantic import BaseModel
 
 
-@dataclass
-class Conversation:
-    """
-    The start of the show. This class contains a list of messages and can
-    connect to OpenAI to generate smart responses to the user's messages.
-    """
+class ChatRole(str, Enum):
+    """Enumeration of chat roles."""
 
-    # The entire message history
-    messages: list[ChatMessage] = field(default_factory=list)
+    USER = "user"
+    ASSISTANT = "assistant"
+    SYSTEM = "system"
+    FUNCTION = "function"
+    TOOL = "tool"
 
-    async def respond(self, client: openai.AsyncOpenAI) -> ChatMessage:
-        """
-        Creates an AI generated response for this conversation and appends it
-        to the messages list. Also returns the new message.
 
-        ## Raises
+class ChatMessage(BaseModel):
+    """Schema for chat messages exchanged between users and researchers."""
 
-        `ValueError` if the most recent message is not by the user.
-        """
+    name: str
+    role: ChatRole
+    content: str
+    user_input_prefill_options: List[str] = []
 
-        # Make sure the last message was by the user
-        if not self.messages or self.messages[-1].role != "user":
-            raise ValueError("The most recent message must be by the user")
+    # Optional: Add a timestamp or other metadata if needed
+    def __str__(self):
+        return f"{self.role}: {self.content}"
 
-        # Convert all messages to the format needed by the API
-        api_messages: list[t.Any] = [
-            {
-                "role": "system",
-                "content": "You are a helpful assistant. Format your response in markdown, "
-                "for example by using **bold**, and _italic_ amongst others.",
-            }
-        ] + [
-            {
-                "role": message.role,
-                "content": message.text,
-            }
-            for message in self.messages
-        ]
 
-        # Generate a response
-        api_response = await client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=api_messages,
-            max_tokens=500,
-        )
+class Conversation(BaseModel):
+    """Conversation class that encapsulates the chat history and context."""
 
-        assert isinstance(api_response.choices[0].message.content, str)
+    history: List[ChatMessage] = []
+    context: dict = {}
 
-        response = ChatMessage(
-            role="assistant",
-            timestamp=datetime.now(tz=timezone.utc),
-            text=api_response.choices[0].message.content,
-        )
-
-        # Append the message and return it as well
-        self.messages.append(response)
-
-        return response
+    def add_message(self, message: ChatMessage):
+        """Add a message to the conversation history."""
+        self.history.append(message)

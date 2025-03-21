@@ -1,9 +1,9 @@
-from typing import Callable, Optional
+from typing import Callable
 import rio
 
-from app.common import make_button, make_text
-
-from ..researchers import Researcher
+from ..common import make_button, make_text
+from ..conversation import ChatRole, ChatMessage
+from ..researcher_agents import Researcher
 
 
 class ChatInterfaceComponentNames:
@@ -27,39 +27,81 @@ class ChatInterface(rio.Component):
 
     def __init__(
         self,
-        researcher: Researcher,
-        on_message_sent: Optional[Callable] = None,
+        on_message_sent: Callable | None = None,
         height: int = 400,
         **kwargs
     ):
         super().__init__(**kwargs)
-        self.researcher = researcher
+        self.enabled_researchers: list[Researcher] = []
         self.on_message_sent = on_message_sent
         self.height = height
         self.user_message = ""
-        self.chat_history = []
-        self.suggested_questions = []
+        self.messages: list[ChatMessage] = []   
+        self.researcher: Researcher | None = None
+        self.user_input_prefill_options = []
 
-        # Initialize with the first message
-        initial_message = self.researcher.get_initial_message()
-        if initial_message:
-            self.chat_history = [{"role": "assistant", "content": initial_message.chat_message}]
-            self.suggested_questions = initial_message.suggested_user_questions
+    def set_researcher(self, researcher: Researcher):
+        """Set the researcher for the chat interface."""
+        self.researcher = researcher
+        self.messages = [ChatMessage(
+            name=researcher.name,
+            role=ChatRole.SYSTEM,
+            content=researcher.instructions
+        )]
+        self.user_input_prefill_options = []
+        self.force_refresh()
+
+    def add_user_message(self, message: str):
+        """Add a user message to the chat history."""
+        self.messages.append(
+            ChatMessage(
+                name="User",
+                role=ChatRole.USER,
+                content=message
+            )
+        )
+        self.force_refresh()
+
+    def add_researcher_message(
+        self,
+        name: str,
+        message: str,
+        user_input_prefill_options: list[str] = [],
+    ):
+        """Add a researcher message to the chat history."""
+        self.messages.append(
+            ChatMessage(
+                name=name,
+                role=ChatRole.ASSISTANT,
+                content=message
+            )
+        )
+        self.user_input_prefill_options = user_input_prefill_options
+
+        self.force_refresh()
 
     def send_message(self, *args):
-        """Send the current user message to the researcher."""
+        """Send the current user message to the current researcher."""
+        if not self.researcher:
+            raise ValueError("No researcher set. Please set a researcher before sending messages.")
+
         if not self.user_message.strip():
             return
 
         # Add user message to chat history
-        self.chat_history.append({"role": "user", "content": self.user_message})
+        self.add_user_message(message=self.user_message)
 
-        # Process the message
-        response = self.researcher.process_message(self.user_message)
-
-        # Update state
-        self.chat_history.append({"role": "assistant", "content": response.chat_message})
-        self.suggested_questions = response.suggested_user_questions
+        # Call 
+        messages = self.researcher.reply(
+            messages=self.messages,
+        )
+        # Add all messages to chat history
+        for message in messages:
+            self.add_researcher_message(
+                name=self.researcher.name,
+                message=message.content,
+                user_input_prefill_options=message.user_input_prefill_options,
+            )
 
         # Clear input
         message_sent = self.user_message
@@ -67,7 +109,7 @@ class ChatInterface(rio.Component):
 
         # Call the callback if provided
         if self.on_message_sent:
-            self.on_message_sent(message_sent, response)
+            self.on_message_sent(message_sent, self.messages)
 
         self.force_refresh()
 
@@ -81,15 +123,18 @@ class ChatInterface(rio.Component):
         self.user_message = event.text
         self.force_refresh()
 
-    def _build_message(self, message: dict) -> rio.Component:
+    def _build_message_component(
+        self,
+        message: ChatMessage,
+    ) -> rio.Component:
         """Build a component for a single chat message."""
-        is_user = message["role"] == "user"
+        is_user = message.role == ChatRole.USER
         return rio.Container(
             rio.Column(
                 rio.Text(
                     "You:" if is_user else "Researcher:",
                 ),
-                rio.Text(message["content"]),
+                rio.Text(message.content),
                 spacing=1,
             ),
         )
@@ -106,7 +151,7 @@ class ChatInterface(rio.Component):
         """Create the chat history component."""
         return rio.Container(
             rio.Column(
-                *[self._build_message(msg) for msg in self.chat_history],
+                *[self._build_message_component(msg) for msg in self.messages],
                 spacing=2,
             ),
             grow_x=True,
@@ -119,9 +164,9 @@ class ChatInterface(rio.Component):
             rio.Column(
                 make_text("Suggested questions:"),
                 rio.Column(
-                    *[self._build_suggested_question(q) for q in self.suggested_questions],
+                    *[self._build_suggested_question(q) for q in self.user_input_prefill_options],
                     spacing=1,
-                ) if self.suggested_questions else make_text("No suggestions available."),
+                ) if self.user_input_prefill_options else make_text("No suggestions available."),
                 spacing=2,
             ),
             grow_x=True,
