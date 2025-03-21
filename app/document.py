@@ -1,11 +1,10 @@
+import itertools
+import json
 from abc import ABCMeta, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
-import itertools
 from pathlib import Path
 from typing import Any, Callable, Optional
-
-import json
 
 from .constants import FilePaths
 from .custom_logging import LOGGER
@@ -255,7 +254,7 @@ class InRepoLocalFilesystemDocumentStore(LocalFilesystemDocStore):
     next_idx = 0
 
     def __init__(self, namespace: str):
-        super().__init__(namespace, FilePaths.UI_LOCAL_DOC_EXPORT_DIR)
+        super().__init__(namespace, FilePaths.MOCK_DOC_STORE_DIR)
 
     def seed_db(self):
         docs = generate_docs()

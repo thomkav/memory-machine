@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 
-import shutil
 import argparse
+import shutil
 from pathlib import Path
+
 import inquirer
 from rich.console import Console
 from termcolor import colored

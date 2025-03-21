@@ -4,12 +4,10 @@ Details specific to schemas and tables belong in a separate file.
 """
 
 import psycopg2
+from db.config import PGDATABASE, PGHOST, PGPASSWORD, PGPORT, PGUSER
 from psycopg2.extensions import connection as Psycopg2Connection
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase
-
-from db.config import PGDATABASE, PGHOST, PGPASSWORD, PGPORT, PGUSER
-
 
 PG_URI = f"postgresql://{PGUSER}:{PGPASSWORD}@{PGHOST}:{PGPORT}/{PGDATABASE}"
 try:

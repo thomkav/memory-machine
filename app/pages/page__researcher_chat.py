@@ -1,23 +1,17 @@
 from __future__ import annotations
 
-from dataclasses import field
-
-import openai
 import rio
 
-from ..custom_logging import LOGGER
-
-from ..document import DocID
-
-
+from ..components.chat_interface import ResearcherChatInterface
 from ..components import (
-    ChatMessage,
+    ChatMessageComponent,
     DocStorePageBase,
-    GeneratingResponsePlaceholder,
-    EmptyChatPlaceholder,
     DocumentStoreDocList,
+    EmptyChatPlaceholder,
+    GeneratingResponsePlaceholder,
 )
-from .. import conversation
+from ..custom_logging import LOGGER
+from ..document import DocID
 
 
 class ChatPageComponentNames:
@@ -35,24 +29,16 @@ class ChatPageComponentNames:
 
 
 @rio.page(
-    name="Chat",
+    name="Researcher Chat",
     url_segment="",
 )
-class ChatPage(DocStorePageBase):
+class ResearcherChatPage(DocStorePageBase):
     """
-    This is the only page in the entire app. It displays the chat history, a
-    text input for the user to ask questions, and a placeholder if there is no
-    chat history yet.
+    A page for chatting with a researcher agent.
     """
 
-    # Stores the conversation history.
-    #
-    # Since Python's dataclasses don't allow for mutable default values, we need
-    # to use a factory function to create a new instance of the conversation
-    # class.
-    conversation: conversation.Conversation = field(
-        default_factory=conversation.Conversation
-    )
+    # Get a single researcher chat interface
+    chat_interface: ResearcherChatInterface | None = None
 
     # This will be used for the text input to store its result in
     user_message_text: str = ""
@@ -66,6 +52,10 @@ class ChatPage(DocStorePageBase):
 
     def __post_init__(self):
         self.doc_store.refresh()
+        self.chat_interface = ResearcherChatInterface(
+            on_message_sent=self.on_text_input_confirm,
+        )
+        self.chat_interface.set_default_researcher()
 
     def handle_select(self, doc_id: DocID) -> None:
         doc = self.doc_store.get_document(doc_id=doc_id)
@@ -105,34 +95,37 @@ class ChatPage(DocStorePageBase):
         chat history as well.
         """
         LOGGER.info(f"Asking question: {message_text}")
+        assert self.chat_interface is not None, "Chat interface should be initialized."
+        assert self.chat_interface.researcher is not None, "Researcher should be set after initialization."
 
         # If document context is provided,
         # add it as a unique message
         if self.document_context:
-            self.conversation.messages.append(
-                conversation.ChatMessage(
-                    role="user",
-                    text=self.document_context,
-                )
+            self.chat_interface.add_system_message(
+                message=self.document_context,
             )
-
-        # Add the user's message to the chat history
-        self.conversation.messages.append(
-            conversation.ChatMessage(
-                role="user",
-                text=message_text,
-            )
-        )
 
         # Indicate to the user that the app is doing something
         self.is_loading = True
         self.force_refresh()
 
+        # Add the user's message to the chat history
+        self.chat_interface.add_user_message(
+            message=message_text,
+        )
+
         # Generate a response
         try:
-            await self.conversation.respond(
-                client=self.session[openai.AsyncOpenAI],
+            messages = self.chat_interface.researcher.reply(
+                messages=self.chat_interface.messages,
             )
+            # Add all messages to chat history
+            for message in messages:
+                self.chat_interface.add_researcher_message(
+                    name=self.chat_interface.researcher.name,
+                    message=message.content,
+                    user_input_prefill_options=message.user_input_prefill_options,
+                )
 
         # Don't get stuck in loading state if an error occurs
         finally:
@@ -161,8 +154,13 @@ class ChatPage(DocStorePageBase):
 
     def _create_message_components(self) -> list[rio.Component]:
         """Create the message components based on conversation history."""
+
+        # If there is no chat interface, return an empty list
+        if not self.chat_interface:
+            return []
+
         message_components: list[rio.Component] = [
-            ChatMessage(msg) for msg in self.conversation.messages
+            ChatMessageComponent(msg) for msg in self.chat_interface.messages
         ]
 
         if self.is_loading:
@@ -268,7 +266,7 @@ class ChatPage(DocStorePageBase):
         ]
 
         # If there aren't any messages yet, display a placeholder
-        if not self.conversation.messages:
+        if not self.chat_interface or not self.chat_interface.messages:
             ordered_components.append(
                 name_to_component[ChatPageComponentNames.EMPTY_CHAT]
             )

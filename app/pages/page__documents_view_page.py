@@ -2,11 +2,7 @@ from __future__ import annotations
 
 import rio
 
-
-from ..components import (
-    DocumentStoreDocList,
-    DocStorePageBase,
-)
+from ..components import DocStorePageBase, DocumentStoreDocList
 from ..document import InRepoLocalFilesystemDocumentStore
 from ..navigation import Navigator
 

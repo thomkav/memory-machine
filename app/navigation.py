@@ -3,9 +3,11 @@ Utility module to navigate between pages.
 """
 
 from typing import Optional
+
+from rio.session import Session
+
 from .constants import URLSegments
 from .document import DocID
-from rio.session import Session
 
 
 def _ensure_path_is_absolute(url_segment: str) -> str:

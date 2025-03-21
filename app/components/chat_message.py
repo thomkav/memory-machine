@@ -2,16 +2,16 @@ from __future__ import annotations
 
 import rio
 
-from .. import conversation
+from ..chat import ChatMessage
 
 
-class ChatMessage(rio.Component):
+class ChatMessageComponent(rio.Component):
     """
     This component displays a single chat message, allowing you can create a
     message history by stacking multiple instances of this component vertically.
     """
 
-    model: conversation.ChatMessage
+    model: ChatMessage
 
     def build(self) -> rio.Component:
         # User messages look slightly different from the bot's responses. This
@@ -45,7 +45,7 @@ class ChatMessage(rio.Component):
             # formatting to their messages.
             rio.Card(
                 rio.Markdown(
-                    self.model.text,
+                    self.model.content,
                     margin=1.5,
                 ),
                 grow_x=True,
