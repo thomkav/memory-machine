@@ -34,7 +34,10 @@ class DocumentEditor(rio.Component):
     def handle_save(self):
         """Handle saving the document."""
         if self.name:
-            self.store.add_document(self.name, self.content)
+            self.store.add_document(
+                name=self.name,
+                content=self.content
+            )
             if self.on_save:
                 self.on_save()
 

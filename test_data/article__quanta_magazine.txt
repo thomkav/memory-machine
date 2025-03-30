@@ -1,0 +1,48 @@
+Nothing is certain in the quantum realm. A particle, for example, can exist in multiple quantum states simultaneously. The same goes for a quantum bit, or qubit — the basic unit of information used in quantum computing. The act of measurement causes these objects to collapse into a single state, and usually the best you can do is calculate the probability of a particular outcome.
+
+The unpredictability at the heart of the quantum realm has been immensely useful for computing and cryptography, where experts have learned to harness randomness as a tool. But as useful as it is for quantum circuits to incorporate true randomness, it’s a difficult state to achieve, with steep costs. “Generating randomness is pretty expensive,” said William Kretschmer (opens a new tab), a researcher at the Simons Institute for the Theory of Computing who studies quantum complexity.
+
+As a result, quantum researchers have long wanted to see if they could possibly fake that randomness. They wanted to build “pseudorandom” quantum circuits, which seem to be truly random but can nonetheless be constructed relatively simply and manageably. The only problem was that no one knew if it was possible to actually build one.
+
+After years of uncertainty, two researchers posted a paper last October (opens a new tab) that proved that it is in fact possible to construct such a circuit. Their work provides an elegant and secure way to represent quantum randomness that’s indistinguishable from the real thing, without the enormous computational load — though it’s only possible in a world where some basic theoretical assumptions of cryptography are correct. The proof could open new doors for quantum computing and cryptography research.
+
+“Before this recent result on pseudorandom [circuits], we didn’t have good evidence that they actually exist,” said Alexander Poremba (opens a new tab), a quantum computing researcher at the Massachusetts Institute of Technology who was not involved with the new paper. Now, “for the first time, we have very good evidence that pseudorandomness is a real concept.”
+
+Randomness to Order
+
+Traditionally, researchers who want to represent randomness in their quantum computations have needed to keep track of every possible configuration of a quantum state. They’ve done the bookkeeping using a mathematical object called a Haar-random unitary, named after the Hungarian mathematician Alfréd Haar. These are thorough descriptions, and in the case of qubits, the possibilities grow exponentially. So while a Haar-random unitary for a few qubits is straightforward, one taking 25 qubits into account would require well over a quadrillion data points. Such complexity far exceeds the capabilities of classical and quantum computers.
+
+
+Fermi Ma helped develop a way to make randomness more accessible, using something called a pseudorandom unitary.
+Xinyu Tan
+Rather than going through the hassle of trying to generate such complexity, researchers have long believed it was possible to simulate this state with something called a pseudorandom unitary, or PRU.  This would work just like a Haar-random state, but in a neat and efficient manner.
+
+Pseudorandomness has long been a foundational concept in computer science, but excitement around its use in applications for quantum systems reached new heights in 2017. That year, a paper (opens a new tab) introduced the concept of a PRU and suggested a possible method for constructing one, but the authors fell short of proving that it would be indistinguishable from a Haar-random unitary. Part of that paper’s logic assumed the existence of something called a one-way function. Put simply, this is a mathematical function that is easy to compute moving forward in time, but extremely difficult to compute in the opposite direction. It’s the mathematical equivalent of a drop of ink spreading through a glass of water: easy to put in, nearly impossible to reverse. These functions are essential for cryptography; most proofs in the field tend to assume they exist.
+
+Subsequent (opens a new tab) papers (opens a new tab) from early last year proved the existence of similar but weaker variants of PRUs. That’s where things stood when Simons Institute colleagues Fermi Ma (opens a new tab) and Robert Huang (opens a new tab) decided to tackle the problem. They used a principle common from quantum information theory known as “purification,” which allows you to analyze a random quantum system as though it’s a smaller part of a larger system in a fixed quantum state — one that behaves predictably moving both forward and backward in time. Drawing inspiration from a seminal 1984 paper (opens a new tab) about pseudorandom functions, Ma and Huang also developed a simpler and more efficient way to simulate Haar-random unitaries, which they called a “path-recording simulation.”
+
+“It felt like we were trying something radically different, just ignoring all of the [recent] literature entirely, and saying, ‘What could we do to analyze this from the ground up?’” Ma said.
+
+
+Robert Huang, together with Ma, came up with a new way to simulate quantum randomness called a “path-recording simulation.”
+ChiYun Cheng
+Once they hit upon this strategy, Ma and Huang worked out their proof in a matter of weeks. They proved that one of the previously proposed constructions for a weaker version of a PRU was in fact a fully-fledged PRU,  thus showing that PRUs really do exist assuming the existence of one-way functions. As a bonus, they also proved the existence of “strong” PRUs, which are indistinguishable from Haar-random unitaries even to certain powerful algorithms.
+
+“We’re all extremely excited — it’s fantastic to solve an open question,” Huang said. “But this also leads to a huge number of implications.”
+
+Practical Possibilities
+
+Assuming those one-way functions really exist, Ma and Huang’s proof suggests new experimental possibilities for quantum computing and cryptography. In 2019, Google announced it had achieved “quantum supremacy,” a landmark achievement in which a quantum computer performs a calculation that can’t be matched by any classical computer. That research was based on efforts to simulate quantum Haar-random states. The new proof for the construction of PRUs could enable similar experiments in the future at a fraction of the computational cost. These constructions are “actually very important for quantum technology as a whole,” Huang said. “We can [now] do these quantum-advantage experiments using much more efficient resources.”
+
+RELATED:
+Researchers Identify ‘Master Problem’ Underlying All Cryptography
+How Randomness Improves Algorithms
+‘Quantum Memory’ Proves Exponentially Powerful
+Cryptographers Discover a New Foundation for Quantum Secrecy
+The proof could also provide physicists with a new method for studying black holes. These complicated objects function as natural information scramblers, so researchers have often modeled them using Haar-random unitaries. But the exponential complexity of these models doesn’t seem to conform with the behavior of black holes, which appear to scramble information very quickly. Physicists have therefore begun to wonder whether black holes might in fact just seem random, while actually emerging from a relatively simple process — in other words, they could be more like pseudorandom unitaries. Now that an explicit proof for the construction of PRUs exists, physicists can start probing that question more directly.
+
+“The lines between physics and computation are becoming much more blurry,” said Poremba, who was a co-author on one of the early 2024 PRU papers.
+
+For Kretschmer, the real significance of Ma and Huang’s proof is that it marks a step toward reconciling classical theory with quantum theory. “It’s telling us how to build pseudorandom unitaries, which are fundamentally quantum objects, from one-way functions, which are classical objects,” he said. “This is the bridge that’s being built.”
+
+Editor’s note: The Simons Institute for the Theory of Computing was established with a grant from the Simons Foundation, which also funds this editorially independent publication. Simons Foundation funding decisions have no influence on our coverage.

@@ -1,7 +1,6 @@
 
 from enum import Enum
 from typing import List
-
 from pydantic import BaseModel
 
 
@@ -18,6 +17,7 @@ class ChatRole(str, Enum):
 class ChatMessage(BaseModel):
     """Schema for chat messages exchanged between users and researchers."""
 
+    name: str
     role: ChatRole
     content: str
     user_input_prefill_options: List[str] = []

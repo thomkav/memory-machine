@@ -11,6 +11,9 @@ class FilePaths:
 
     MOCK_DOC_STORE_DIR = REPO_ROOT_DIR / "mock_doc_store"
 
+    TEST_DATA_DIR = REPO_ROOT_DIR / "test_data"
+    ARTICLE__QUANTA_MAGAZINE = TEST_DATA_DIR / "article__quanta_magazine.txt"
+
 
 class URLSegments:
 

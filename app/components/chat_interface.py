@@ -4,7 +4,7 @@ import rio
 
 from ..chat import ChatMessage, ChatRole
 from ..common import make_button, make_text
-from ..researcher_agents import Researcher
+from ..researcher_agents import Researcher, get_default_researcher
 
 
 class ChatInterfaceComponentNames:
@@ -22,7 +22,7 @@ class ChatInterfaceComponentNames:
 
 
 ENABLED_RESEARCHERS: list[Researcher] = [
-    Researcher(name="Researcher 1"),
+    get_default_researcher(),
 ]
 
 
@@ -49,11 +49,12 @@ class ResearcherChatInterface(rio.Component):
     def set_researcher(self, researcher: Researcher):
         """Set the researcher for the chat interface."""
         self.researcher = researcher
-        self.messages = [ChatMessage(
-            name=researcher.name,
-            role=ChatRole.SYSTEM,
-            content=researcher.objective,
-        )]
+        self.messages = [
+            ChatMessage(
+                role=ChatRole.SYSTEM,
+                content=researcher.description,
+            )
+        ]
         self.user_input_prefill_options = []
         self.force_refresh()
 
@@ -69,7 +70,6 @@ class ResearcherChatInterface(rio.Component):
         """Add a user message to the chat history."""
         self.messages.append(
             ChatMessage(
-                name="User",
                 role=ChatRole.USER,
                 content=message
             )
@@ -86,7 +86,6 @@ class ResearcherChatInterface(rio.Component):
         """Add a researcher message to the chat history."""
         self.messages.append(
             ChatMessage(
-                name=name,
                 role=ChatRole.ASSISTANT,
                 content=message
             )
@@ -98,7 +97,6 @@ class ResearcherChatInterface(rio.Component):
         """Add a system message to the chat history."""
         self.messages.append(
             ChatMessage(
-                name="System",
                 role=ChatRole.SYSTEM,
                 content=message
             )

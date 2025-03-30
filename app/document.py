@@ -104,6 +104,10 @@ class DocMap(dict[DocID, Doc]):
         self[doc.doc_id] = doc
 
     def add(self, doc: Doc):
+        """
+        Add a document to the map. If the document already exists, raise an error.
+        If the document is too large, raise an error.
+        """
 
         if len(self) >= DOCMAP_LIMIT:
             raise DocMapOverflowException
@@ -164,6 +168,7 @@ class DocStore(metaclass=ABCMeta):
 
     namespace: DocStoreNamespace
     doc_map: DocMap = DocMap()  # Document ID -> Document
+    file_map: dict[str, Doc] = {}  # File name -> Document
 
     def __init__(self, namespace: DocStoreNamespace) -> None:
         assert namespace
@@ -199,8 +204,20 @@ class DocStore(metaclass=ABCMeta):
         name: str,
         content: str,
         doc_id: Optional[DocID] = None,
+        file_name: Optional[str] = None,
     ) -> Doc:
         """Add a new document."""
+
+        if file_name:
+            if file_name in self.file_map:
+                LOGGER.info(f"File name {file_name} already exists, returning existing document")
+                return self.file_map[file_name]
+
+        if doc_id is None:
+            doc_id = max(self.doc_map.keys(), default=0) + 1
+        if doc_id in self.doc_map:
+            LOGGER.info(f"Document {doc_id} already exists, returning existing document")
+            return self.doc_map[doc_id]
 
         new_doc = Doc(
             doc_id=doc_id,
@@ -209,11 +226,17 @@ class DocStore(metaclass=ABCMeta):
         )
         self.doc_map.add(doc=new_doc)
 
+        if file_name:
+            self.file_map[file_name] = new_doc
+
         return new_doc
 
     def delete_document(self, doc_id: DocID) -> bool:
         try:
             self.doc_map.delete(doc_id=doc_id)
+            if doc_id in self.file_map:
+                del self.file_map[doc_id]
+            LOGGER.info(f"Deleted document {doc_id} from doc map")
             return True
         except Exception as e:
             LOGGER.error(f"Exception deleting doc in namespace {self.namespace}: {e}")
@@ -230,9 +253,22 @@ class LocalFilesystemDocStore(DocStore):
 
     def _get_doc_map_from_store(self) -> DocMap:
         for path in self.doc_dir.iterdir():
+
+            # If not a JSON file, skip
+            if DOC_FILE_EXT not in path.name:
+                LOGGER.debug(f"Skipping file {path} because it is not a JSON file")
+                continue
+
+            # Check if file is already in the map
+            if path.name in self.file_map:
+                LOGGER.debug(f"File {path} already exists in file map, skipping")
+                continue
+
             try:
                 doc = Doc.load_from_path(path=path)
                 self.doc_map.add(doc=doc)
+                self.file_map[path.name] = doc
+                LOGGER.debug(f"Loaded document {doc} from path {path}")
             except Exception as e:
                 LOGGER.error(f"Doc at path {path} failed to load: {e}")
         return self.doc_map

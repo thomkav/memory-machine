@@ -45,7 +45,7 @@ class DocumentListComponentNames:
     ]
 
 
-def build_document_card(
+def _build_document_card(
     doc: Doc,
     selected_doc_id: Optional[DocID],
     on_select: Callable[[DocID], None],
@@ -83,9 +83,10 @@ def build_document_card(
                     font_size=0.8,
                     style="dim"
                 ),
-            ),
+                margin=1,
+            )
         ),
-        color=rio.Color.GREEN if doc_is_selected else rio.Color.BLACK,
+        color=rio.Color.GREEN if doc_is_selected else rio.Color.GRAY,
         on_press=select_document,
     )
 
@@ -93,7 +94,7 @@ def build_document_card(
 DocumentAction = Callable[[DocID], None]
 
 
-class DocumentStoreDocList(rio.Component):
+class DocListComponent(rio.Component):
     """
     This component displays a list of documents from a single document store.
     It allows selecting a document and provides buttons for common actions.
@@ -155,7 +156,6 @@ class DocumentStoreDocList(rio.Component):
     def handle_refresh_doc_store(self):
         """Handle document load."""
         self.doc_store.refresh()
-        self.force_refresh()
 
     def handle_save(self):
         self.doc_store.save_all_to_remote()
@@ -169,16 +169,19 @@ class DocumentStoreDocList(rio.Component):
 
     def _create_document_cards_component(self) -> rio.Component:
         """Create a list of document card components."""
-        LOGGER.debug(f"Creating {len(self.doc_store.get_doc_map())} document cards")
+        LOGGER.debug(f"Creating document cards, count: {len(self.doc_store.get_doc_map())}")
         document_cards = [
-            build_document_card(
+            _build_document_card(
                 doc=doc,
                 selected_doc_id=self.selected_doc_id,
                 on_select=self.handle_select,
             ) for doc in self.doc_store.get_doc_map().values()
         ]
 
-        return rio.Column(*document_cards)
+        return rio.Column(
+            *document_cards,
+            spacing=1,
+        )
 
     def _generate_buttons(self) -> List[rio.Component]:
         """Generate buttons based on button specifications"""
@@ -259,9 +262,32 @@ class DocStorePageBase(rio.Component):
     )
     navigator: Navigator = Navigator()
 
+    on_add_document: Optional[Callable[[], None]] = None
+    on_delete_document: Optional[Callable[[DocID], None]] = None
+    on_view_document: Optional[Callable[[DocID], None]] = None
+    on_select_document: Optional[Callable[[DocID], None]] = None
+
+    _doc_list_component: Optional[DocListComponent] = None
+
     def __post_init__(self):
 
         self.navigator = Navigator(self.session)
-        self.doc_store_list = DocumentStoreDocList(
-            doc_store=self.doc_store,
-        )
+
+        assert self.doc_store is not None, "Document store should be initialized."
+
+        if not self._doc_list_component:
+            self._doc_list_component = DocListComponent(
+                doc_store=self.doc_store,
+                on_add_document=self.on_add_document,
+                on_delete_document=self.on_delete_document,
+                on_view_document=self.on_view_document,
+                on_select_document=self.on_select_document,
+            )
+
+    @property
+    def doc_list_component(self) -> DocListComponent:
+        """Return the document list component."""
+
+        assert self._doc_list_component is not None, "Document list component should be initialized."
+
+        return self._doc_list_component

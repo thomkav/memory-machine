@@ -2,16 +2,17 @@ from __future__ import annotations
 
 import rio
 
+
 from ..components.chat_interface import ResearcherChatInterface
 from ..components import (
     ChatMessageComponent,
     DocStorePageBase,
-    DocumentStoreDocList,
     EmptyChatPlaceholder,
     GeneratingResponsePlaceholder,
 )
 from ..custom_logging import LOGGER
-from ..document import DocID
+from ..document import Doc, DocID
+from ..instructions import Context
 
 
 class ChatPageComponentNames:
@@ -43,8 +44,6 @@ class ResearcherChatPage(DocStorePageBase):
     # This will be used for the text input to store its result in
     user_message_text: str = ""
 
-    document_context: str = ""
-
     # If this is `True`, the app is currently generating a response. An
     # indicator will be displayed to the user, and the text input will be
     # disabled.
@@ -58,10 +57,7 @@ class ResearcherChatPage(DocStorePageBase):
         self.chat_interface.set_default_researcher()
 
     def handle_select(self, doc_id: DocID) -> None:
-        doc = self.doc_store.get_document(doc_id=doc_id)
-        LOGGER.info(f"Document Selected {doc}")
-        assert doc
-        self.document_context = f"Document Details: Name: {doc.name}, Content: {doc.content}"
+        LOGGER.info(f"Document Selected {doc_id}")
 
     def handle_enter(self):
         LOGGER.debug("Entered something into the chat.")
@@ -98,12 +94,17 @@ class ResearcherChatPage(DocStorePageBase):
         assert self.chat_interface is not None, "Chat interface should be initialized."
         assert self.chat_interface.researcher is not None, "Researcher should be set after initialization."
 
-        # If document context is provided,
-        # add it as a unique message
-        if self.document_context:
-            self.chat_interface.add_system_message(
-                message=self.document_context,
-            )
+        if not self.doc_list_component.selected_doc_id:
+            LOGGER.info("No document selected")
+            return
+
+        # Get the selected document
+        selected_document: Doc | None = self.doc_store.get_document(
+            doc_id=self.doc_list_component.selected_doc_id,
+        )
+        if not selected_document:
+            LOGGER.info("No document retrieved")
+            return
 
         # Indicate to the user that the app is doing something
         self.is_loading = True
@@ -118,6 +119,9 @@ class ResearcherChatPage(DocStorePageBase):
         try:
             messages = self.chat_interface.researcher.reply(
                 messages=self.chat_interface.messages,
+                context=Context(
+                    documents=[selected_document],
+                ),
             )
             # Add all messages to chat history
             for message in messages:
@@ -250,10 +254,7 @@ class ResearcherChatPage(DocStorePageBase):
         components_by_name[
             ChatPageComponentNames.DOCUMENT_LIST
         ] = rio.Row(
-            DocumentStoreDocList(
-                doc_store=self.doc_store,
-                on_select_document=self.handle_select,
-            )
+            self.doc_list_component,
         )
 
         return components_by_name

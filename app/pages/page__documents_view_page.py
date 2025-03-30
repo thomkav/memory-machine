@@ -2,9 +2,7 @@ from __future__ import annotations
 
 import rio
 
-from ..components import DocStorePageBase, DocumentStoreDocList
-from ..document import InRepoLocalFilesystemDocumentStore
-from ..navigation import Navigator
+from ..components import DocStorePageBase
 
 
 @rio.page(
@@ -15,18 +13,6 @@ class DocumentListPage(DocStorePageBase):
     """
     Page for viewing a list of documents in the store.
     """
-
-    def __init__(self) -> None:
-        navigator = Navigator()
-        super().__init__(
-            doc_store=InRepoLocalFilesystemDocumentStore(
-                namespace="default",
-            ),
-            navigator=navigator,
-        )
-
-    def __post_init__(self):
-        self.navigator = Navigator(self.session)
 
     def handle_add_document(self) -> None:
         """Navigate to the document add page."""
@@ -41,12 +27,5 @@ class DocumentListPage(DocStorePageBase):
         self.navigator.to_document_view(doc_id=doc_id)
 
     def build(self) -> rio.Component:
-        return rio.Column(
-            DocumentStoreDocList(
-                doc_store=self.doc_store,
-                on_add_document=self.handle_add_document,
-                on_delete_document=self.handle_delete_document,
-                on_view_document=self.handle_view_document,
-            ),
-            margin=1,
-        )
+        assert self.doc_list_component is not None, "Document store list should be initialized."
+        return rio.Column(self.doc_list_component)
