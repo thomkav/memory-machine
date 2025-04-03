@@ -22,11 +22,15 @@ from mongodb import client  # Assuming mongodb.py is in the same directory
 
 # Import constants
 from constants import (
-    MessageKeys,
-    HeaderKeys,
-    PayloadKeys,
     AttachmentInfoKeys,
+    FilePaths,
+    HeaderKeys,
+    MessageKeys,
+    MongoDBCollections,
+    MongoDatabaseNames,
     MongoDBKeys,
+    PayloadKeys,
+    S3Constants,
 )
 
 # Gmail API scopes
@@ -34,26 +38,6 @@ SCOPES = [
     "https://www.googleapis.com/auth/gmail.readonly",
     "https://www.googleapis.com/auth/gmail.modify",
 ]
-
-
-def _get_header_value(
-    headers: list[dict],
-    name: str,
-) -> str | None:
-    """
-    Get the value of a header by its name.
-
-    Args:
-        headers (list[dict]): List of headers
-        name (str): Header name to search for
-
-    Returns:
-        (str | None): Header value or None if not found
-    """
-    for header in headers:
-        if header[HeaderKeys.NAME] == name:
-            return header[HeaderKeys.VALUE]
-    return None
 
 
 class GmailS3Uploader:
@@ -87,11 +71,8 @@ class GmailS3Uploader:
 
         # MongoDB connection
         self.mongo_client = client
-        self.db = self.mongo_client["email_attachments"]
-        self.attachments_collection = self.db["attachments"]
-
-        # Create uploads directory if it doesn't exist
-        os.makedirs("uploads", exist_ok=True)
+        self.db = self.mongo_client[MongoDatabaseNames.EMAIL]
+        self.attachments_collection = self.db[MongoDBCollections.ATTACHMENTS]
 
     def _authenticate_gmail(self):
         """Authenticate with Gmail API and return the service."""
@@ -199,7 +180,7 @@ class GmailS3Uploader:
 
         # Create a unique filename with timestamp
         timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-        file_path = f"uploads/{timestamp}_{filename}"
+        file_path = FilePaths.PARSED_EMAILS_DIR / f"{timestamp}_{filename}"
 
         # Save the file locally
         with open(file_path, "wb") as f:
@@ -208,7 +189,7 @@ class GmailS3Uploader:
         # Store attachment info
         attachment_info_dict = {
             AttachmentInfoKeys.FILENAME: filename,
-            AttachmentInfoKeys.LOCAL_PATH: file_path,
+            AttachmentInfoKeys.LOCAL_PATH: str(file_path),
             AttachmentInfoKeys.SENDER: sender,
             AttachmentInfoKeys.SUBJECT: subject,
             AttachmentInfoKeys.DATE: date,
@@ -283,7 +264,7 @@ class GmailS3Uploader:
             message_info = {
                 MongoDBKeys.MESSAGE_ID: msg_id,
                 MongoDBKeys.SENDER: message.get(MessageKeys.SENDER),
-                MongoDBKeys.SUBJECT: message[MessageKeys.SNIPPET],
+                MongoDBKeys.SUBJECT: message.get(MessageKeys.SUBJECT),
                 MongoDBKeys.DATE_RECEIVED: message[MessageKeys.INTERNAL_DATE],
                 MongoDBKeys.ATTACHMENTS: list_attachments_dicts,
                 MongoDBKeys.PROCESSED_AT: datetime.now(),
@@ -434,17 +415,14 @@ class GmailS3Uploader:
 
     def run(self):
         """Run the uploader once."""
-        print(
-            f"Starting Gmail to S3 uploader. Checking every {self.check_interval} seconds."
-        )
         self.process_emails()
 
 
 if __name__ == "__main__":
     # Configuration
-    CREDENTIALS_FILE = "credentials.json"  # Downloaded from Google Cloud Console
-    TOKEN_FILE = "token.pickle"
-    S3_BUCKET_NAME = "memory-machine-receiving"
+    CREDENTIALS_FILE = FilePaths.GOOGLE_CLOUD_API_CREDENTIALS  # Downloaded from Google Cloud Console
+    TOKEN_FILE = FilePaths.GOOGLE_CLOUD_API_TOKEN  # Token file to store user credentials for Gmail API
+    S3_BUCKET_NAME = S3Constants.BUCKET_NAME  # Your S3 bucket name
     CHECK_INTERVAL = 60  # seconds
     REPLACE_EXISTING = True  # Set to True to replace existing documents
 
