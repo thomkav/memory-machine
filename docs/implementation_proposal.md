@@ -30,7 +30,7 @@ The Memory Machine system will be implemented with a modular architecture consis
 ## 2. Technical Stack
 
 ### Core Technologies
-- **Backend**: Python 3.9+
+- **Backend**: Python 3.12+
 - **Database**: 
   - Vector database (Pinecone/Milvus/FAISS) for embeddings
   - Document store (MongoDB) for raw content

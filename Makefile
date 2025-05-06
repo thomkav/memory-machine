@@ -19,6 +19,13 @@ define echo_wrapper
 endef
 
 # --------------------
+# Copilot Instructions
+# --------------------
+.PHONY: set-copilot-instructions
+set-copilot-instructions: # Set the copilot instructions
+	$(call echo_wrapper, bash scripts/set_copilot_instructions.sh)
+
+# --------------------
 # Virtual environment
 # --------------------
 
@@ -57,9 +64,7 @@ install-dependencies: .venv requirements.txt requirements-dev.txt # Install Pyth
 
 .PHONY: install-git-hooks
 install-git-hooks: # Install git hooks
-	$(call echo_wrapper, git config --unset-all core.hooksPath || true)
-	$(call echo_wrapper, pip install pre-commit --quiet)
-	$(call echo_wrapper, pre-commit install)
+	$(call echo_wrapper, sh scripts/install_git_hooks.sh)
 
 .PHONY: install
 install: install-dependencies install-git-hooks install-coreutils # Install all dependencies
@@ -174,6 +179,10 @@ switch-instructions:
 .PHONY: run-ui
 run-ui: # Run the UI
 	$(call echo_wrapper, bash scripts/run_ui.sh)
+
+.PHONY: run-gmail-ingest
+run-gmail-ingest: # Run the Gmail ingest
+	$(call echo_wrapper, bash scripts/run_python_script.sh gmail/ingest.py)
 
 # --------------------
 # Help
